@@ -3,96 +3,386 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>น้ำถึงไหน · ทดสอบแหล่งข้อมูล</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans+Thai:wght@400;600&family=IBM+Plex+Mono&display=swap">
+<meta name="description" content="เฝ้าระวังสถานการณ์น้ำรายอำเภอและตำบล ลุ่มยม น่าน เจ้าพระยา อัปเดตทุก 30 นาทีจากข้อมูล สสน.">
+<title>น้ำถึงไหน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-:root{--bg:#EEF3F4;--surface:#fff;--sunk:#E3EBED;--ink:#10262E;--ink2:#46606A;--line:#C9D6DA;--accent:#1B5E78;--ok:#1F8A5B;--ok-bg:#DDF1E7;--bad:#C4302B;--bad-bg:#F8DDDB;--na:#7B8D93}
-@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0C181D;--surface:#13242B;--sunk:#0F1E24;--ink:#E4EEF0;--ink2:#9BB2BA;--line:#27404A;--accent:#6FB7D2;--ok:#4CC08A;--ok-bg:#153A2A;--bad:#FF6B63;--bad-bg:#44191A}}
+:root{
+  --bg:#EEF3F4; --surface:#FFFFFF; --sunk:#E3EBED; --ink:#10262E; --ink2:#46606A; --line:#C9D6DA;
+  --accent:#1B5E78; --accent-soft:#D6E7EE;
+  --ok:#1F8A5B; --ok-bg:#DDF1E7; --watch:#B86E00; --watch-bg:#FBEBCF; --over:#C4302B; --over-bg:#F8DDDB; --na:#7B8D93; --na-bg:#E6ECEE;
+  --tide:#5B5FA8;
+  --display:"Chakra Petch","IBM Plex Sans Thai",system-ui,sans-serif;
+  --body:"IBM Plex Sans Thai",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0C181D; --surface:#13242B; --sunk:#0F1E24; --ink:#E4EEF0; --ink2:#9BB2BA; --line:#27404A;
+    --accent:#6FB7D2; --accent-soft:#1B3A47;
+    --ok:#4CC08A; --ok-bg:#153A2A; --watch:#F0A93A; --watch-bg:#3D2C10; --over:#FF6B63; --over-bg:#44191A; --na:#8397A0; --na-bg:#1C2D34; --tide:#A2A6F0;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0C181D; --surface:#13242B; --sunk:#0F1E24; --ink:#E4EEF0; --ink2:#9BB2BA; --line:#27404A;
+  --accent:#6FB7D2; --accent-soft:#1B3A47;
+  --ok:#4CC08A; --ok-bg:#153A2A; --watch:#F0A93A; --watch-bg:#3D2C10; --over:#FF6B63; --over-bg:#44191A; --na:#8397A0; --na-bg:#1C2D34; --tide:#A2A6F0;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "IBM Plex Sans Thai",system-ui,sans-serif}
-.wrap{max-width:960px;margin:0 auto;padding:24px 16px 48px;display:flex;flex-direction:column;gap:22px}
-h1,h2{font-family:"Chakra Petch","IBM Plex Sans Thai",sans-serif;margin:0;line-height:1.2}
-h1{font-size:1.9rem}h1 span{color:var(--accent)}h2{font-size:1.2rem}
-.muted{color:var(--ink2)}.mono{font-family:"IBM Plex Mono",monospace;font-size:.82rem}
-header{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:12px}
-button{font:inherit;font-weight:600;background:var(--accent);color:var(--bg);border:0;border-radius:99px;padding:8px 18px;cursor:pointer}
-button:disabled{opacity:.6;cursor:wait}
-button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;border-top:5px solid var(--na)}
-.card[data-ok="true"]{border-top-color:var(--ok)}.card[data-ok="false"]{border-top-color:var(--bad)}
-.pill{align-self:flex-start;font-weight:600;font-size:.82rem;padding:2px 12px;border-radius:99px;background:var(--sunk);color:var(--na)}
-.card[data-ok="true"] .pill{background:var(--ok-bg);color:var(--ok)}.card[data-ok="false"] .pill{background:var(--bad-bg);color:var(--bad)}
-dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:0;font-size:.88rem}dt{color:var(--ink2)}dd{margin:0;font-variant-numeric:tabular-nums}
-.err{color:var(--bad);font-size:.88rem}
-.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
-table{border-collapse:collapse;width:100%;font-size:.88rem}th,td{padding:7px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
-th{background:var(--sunk);color:var(--ink2);font-size:.78rem}tr:last-child td{border-bottom:0}
-.y{color:var(--ok);font-weight:600}.n{color:var(--bad);font-weight:600}
-.note{background:var(--sunk);border-radius:8px;padding:12px 14px;font-size:.88rem}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:20px 56px;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.2}
+h2{font-size:1.35rem;font-weight:600}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+.muted{color:var(--ink2)}
+.mono{font-family:var(--mono);font-size:.85em}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+a{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:14px}
+.brand h1{font-size:2.2rem;font-weight:700;letter-spacing:.01em}
+.brand h1 span{color:var(--accent)}
+.stamp{font-family:var(--mono);font-size:.8rem;color:var(--ink2);text-align:right}
+.proto{display:inline-block;background:var(--watch-bg);color:var(--watch);font-weight:600;font-size:.78rem;padding:2px 10px;border-radius:99px}
+
+/* area picker */
+.picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.picker label{font-weight:600;margin-right:4px}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 14px;border-radius:99px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.chip:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chip .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+/* summary */
+.summary{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.summary{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.brief{border-left:6px solid var(--na)}
+.brief[data-s="over"]{border-left-color:var(--over)}
+.brief[data-s="watch"]{border-left-color:var(--watch)}
+.brief[data-s="ok"]{border-left-color:var(--ok)}
+.brief .head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.85rem;padding:3px 12px;border-radius:99px}
+.pill[data-s="over"]{background:var(--over-bg);color:var(--over)}
+.pill[data-s="watch"]{background:var(--watch-bg);color:var(--watch)}
+.pill[data-s="ok"]{background:var(--ok-bg);color:var(--ok)}
+.pill[data-s="na"]{background:var(--na-bg);color:var(--na)}
+.brief .text{display:flex;flex-direction:column;gap:10px;max-width:68ch}
+.brief .text b{font-weight:600}
+.brief .foot{margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);font-size:.8rem;color:var(--ink2)}
+.facts{display:flex;flex-direction:column;gap:12px}
+.fact{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:10px}
+.fact:last-child{border-bottom:0;padding-bottom:0}
+.fact .v{font-family:var(--display);font-size:1.5rem;font-weight:600}
+.fact .k{font-size:.88rem;color:var(--ink2)}
+.warnbox{background:var(--sunk);border-radius:8px;padding:12px 14px;font-size:.88rem}
+
+/* river schematic */
+.river-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.river-grid{grid-template-columns:1fr}}
+.stem{position:relative;display:flex;flex-direction:column;gap:0}
+.seg{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px}
+.rail{position:relative;display:flex;justify-content:center}
+.rail::before{content:"";position:absolute;top:0;bottom:0;width:6px;background:var(--accent-soft);border-radius:3px}
+.node{position:relative;z-index:1;margin-top:16px;width:16px;height:16px;border-radius:50%;background:var(--surface);border:4px solid var(--na)}
+.node[data-s="over"]{border-color:var(--over)} .node[data-s="watch"]{border-color:var(--watch)} .node[data-s="ok"]{border-color:var(--ok)}
+.st{padding-block:8px;border-radius:8px}
+.st.sel{background:var(--accent-soft);margin-inline:-8px;padding-inline:8px}
+.st .row1{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.st .code{font-family:var(--mono);font-size:.8rem;color:var(--ink2);min-width:4.5em}
+.st .name{font-weight:600}
+.st .where{font-size:.82rem;color:var(--ink2)}
+.gauge{margin-top:6px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.bar{position:relative;height:10px;background:var(--sunk);border-radius:5px;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--na)}
+.bar i[data-s="over"]{background:var(--over)} .bar i[data-s="watch"]{background:var(--watch)} .bar i[data-s="ok"]{background:var(--ok)}
+.bar b{position:absolute;top:-2px;bottom:-2px;left:80%;width:2px;background:var(--ink2);opacity:.45}
+.gv{font-family:var(--mono);font-size:.8rem;white-space:nowrap}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:.75rem;padding:1px 8px;border-radius:4px;background:var(--sunk);color:var(--ink2)}
+.tag.tide{color:var(--tide)}
+.tag.up{color:var(--over)}
+.travel{grid-column:2;font-size:.78rem;color:var(--accent);font-weight:600;padding-block:2px;display:flex;align-items:center;gap:6px}
+.travel::before{content:"↓";font-family:var(--mono)}
+.branch h3{margin-bottom:6px}
+.side{display:flex;flex-direction:column;gap:16px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.82rem;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;font-size:.78rem;letter-spacing:.04em;color:var(--ink2);background:var(--sunk);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.counts{display:flex;flex-wrap:wrap;gap:8px}
+.cnt{flex:1 1 90px;background:var(--sunk);border-radius:8px;padding:10px 12px}
+.cnt .v{font-family:var(--display);font-size:1.5rem;font-weight:600}
+.cnt .k{font-size:.8rem;color:var(--ink2)}
+.hbar{display:inline-block;height:8px;border-radius:4px;vertical-align:middle}
+ol.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px;max-width:72ch}
+pre.mermaid{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;margin:0}
+footer{font-size:.82rem;color:var(--ink2);display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:14px}
+@media (prefers-reduced-motion:no-preference){.brief{transition:border-color .25s}}
+
+.disclaimer{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;background:var(--watch-bg);color:var(--ink);border:1px solid var(--watch);border-radius:10px;padding:14px 16px;font-size:.9rem}
+.disclaimer .ic{font-family:var(--display);font-weight:700;color:var(--watch);font-size:1.1rem;line-height:1.3}
+.disclaimer b{font-weight:600}
+.seg-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.risk-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.official{background:var(--sunk);border-radius:8px;padding:10px 14px;font-size:.88rem}
+td .sub{display:block;font-size:.8rem;color:var(--ink2)}
+.src{font-family:var(--mono);font-size:.72rem;color:var(--ink2)}
+.stalebar{background:var(--over-bg);color:var(--over);border:1px solid var(--over);border-radius:10px;padding:12px 16px;font-weight:600;font-size:.9rem}
+.rivers{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start}
+@media (max-width:420px){.rivers{grid-template-columns:1fr}}
+.stamp b{color:var(--ink)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div><div class="muted" style="font-size:.8rem">ขั้นทดสอบ · ตรวจว่าเซิร์ฟเวอร์ Netlify ดึงข้อมูลได้ไหม</div><h1>น้ำ<span>ถึงไหน</span></h1></div>
-    <button id="run" type="button">ทดสอบตอนนี้</button>
+  <header class="top">
+    <div class="brand">
+      <div class="eyebrow">เฝ้าระวังน้ำรายพื้นที่ · ลุ่มยม น่าน เจ้าพระยา</div>
+      <h1>น้ำ<span>ถึงไหน</span></h1>
+    </div>
+    <div class="stamp" id="stamp">กำลังโหลดข้อมูล…</div>
   </header>
 
+  <aside class="stalebar" id="stalebar" role="status" hidden></aside>
+
+  <aside class="disclaimer" role="note" aria-label="ข้อจำกัดความรับผิดชอบ">
+    <span class="ic">!</span>
+    <div>
+      <b>ข้อมูลมาจากหน่วยงานทางการ แต่การสรุปและคาดการณ์อาจคลาดเคลื่อน</b><br>
+      ระดับน้ำดึงจากระบบ ThaiWater ของสถาบันสารสนเทศทรัพยากรน้ำ (สสน.) โดยอัตโนมัติทุก 30 นาที ส่วนข้อความสรุป ระดับความเสี่ยง และเวลาที่น้ำจะมาถึง เป็นการประมวลผลของระบบนี้ ซึ่งอาจผิดพลาดหรือล่าช้ากว่าสถานการณ์จริง หน้านี้ไม่ใช่ประกาศทางการ โปรดติดตามประกาศจากกรมชลประทาน กรมป้องกันและบรรเทาสาธารณภัย (ปภ.) และหน่วยงานท้องถิ่นของท่านเสมอ
+    </div>
+  </aside>
+
   <section class="stack">
-    <h2>ผลรอบล่าสุด</h2>
-    <p class="muted" id="meta">กำลังโหลด…</p>
-    <div class="grid" id="cards"></div>
+    <div class="picker" role="group" aria-labelledby="pick-h">
+      <label id="pick-h">พื้นที่ของฉัน</label>
+      <div id="chips" class="picker"></div>
+    </div>
   </section>
 
-  <section>
-    <h2 style="margin-bottom:8px">ประวัติการรัน</h2>
-    <p class="muted" style="margin:0 0 10px">รอบอัตโนมัติควรขึ้นทุก 30 นาที (นาทีที่ :00 และ :30) ถ้าเห็นแต่ “สั่งเอง” แปลว่าการตั้งเวลายังไม่ทำงาน</p>
+  <section class="summary">
+    <article class="card brief" id="brief" aria-live="polite">
+      <div class="head">
+        <h2 id="b-title">–</h2>
+        <span class="pill" id="b-pill" data-s="na">–</span>
+      </div>
+      <div class="text" id="b-text"><p class="muted">กำลังโหลด…</p></div>
+      <div class="foot" id="b-foot"></div>
+    </article>
+    <aside class="card facts" id="facts"></aside>
+  </section>
+
+  <section class="stack" aria-labelledby="risk-h">
+    <div class="risk-head">
+      <div class="stack" style="gap:4px">
+        <h2 id="risk-h">จุดเสี่ยงรายอำเภอและตำบล</h2>
+        <p class="muted" id="risk-sub"></p>
+      </div>
+      <div class="seg-tabs" role="group" aria-label="ขอบเขต">
+        <button type="button" class="chip" id="scope-prov" aria-pressed="true">เฉพาะจังหวัดนี้</button>
+        <button type="button" class="chip" id="scope-all" aria-pressed="false">ทุกจังหวัดในระบบ</button>
+      </div>
+    </div>
+    <div class="official" id="official" hidden></div>
     <div class="tbl"><table>
-      <thead><tr><th>เวลา (ไทย)</th><th>ที่มา</th><th>ThaiWater</th><th>กรมชลฯ</th><th>สนน.</th><th>ใช้เวลา</th></tr></thead>
-      <tbody id="log"><tr><td colspan="6" class="muted">ยังไม่มีข้อมูล</td></tr></tbody>
+      <thead><tr><th>อำเภอ / ตำบล</th><th>สถานี</th><th>สถานะ</th><th class="r">เทียบตลิ่ง</th><th class="r">% ความจุ</th><th class="r">แนวโน้ม</th></tr></thead>
+      <tbody id="risk-tb"></tbody>
     </table></div>
+    <p class="muted" style="font-size:.82rem;max-width:80ch">จุดเสี่ยงระบุจากตำแหน่งสถานีวัดน้ำ ไม่ได้ครอบคลุมทุกพื้นที่ในตำบล พื้นที่ใกล้เคียงที่อยู่ต่ำหรืออยู่นอกคันกั้นน้ำอาจได้รับผลกระทบแม้ไม่มีสถานีในรายการ</p>
   </section>
 
-  <p class="note">หน้านี้ใช้ทดสอบระบบเท่านั้น ยังไม่ใช่หน้ารายงานสถานการณ์น้ำ ข้อมูลเป็นของกรมชลประทาน สสน. และสำนักการระบายน้ำ กทม.</p>
+  <section class="stack" aria-labelledby="river-h">
+    <div class="stack">
+      <h2 id="river-h">ผังแม่น้ำ</h2>
+      <p class="muted" style="max-width:72ch">เรียงจากต้นน้ำไปท้ายน้ำ แถบสีคือ % ความจุ (ระดับน้ำเทียบตลิ่ง) เส้นขีดคือ 80% แสดงเฉพาะสถานีที่มีข้อมูลในรอบนี้</p>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--ok)"></i>ปกติ (&lt;80%)</span>
+        <span><i class="sw" style="background:var(--watch)"></i>เฝ้าระวัง (80–100%)</span>
+        <span><i class="sw" style="background:var(--over)"></i>ล้นตลิ่ง</span>
+        <span><i class="sw" style="background:var(--na)"></i>ข้อมูลเก่า / ไม่มีเกณฑ์</span>
+        <span><i class="sw" style="background:var(--tide)"></i>น้ำทะเลหนุน</span>
+      </div>
+    </div>
+    <div class="rivers" id="rivers"></div>
+    <p class="warnbox">เวลาน้ำเดินทางจากเขื่อนเจ้าพระยา (โดยประมาณ): ชัยนาท → สิงห์บุรี ~10 ชม. → อ่างทอง ~8 ชม. → อยุธยา ~6 ชม. → ปทุมธานี ~8 ชม. → นนทบุรี–กทม. ~24 ชม. <span class="muted">(กรมชลประทาน อ้างใน Nation Thailand พ.ย. 2568 เวลาจริงเปลี่ยนตามปริมาณน้ำและน้ำทะเลหนุน)</span></p>
+  </section>
+
+  <footer>
+    <p id="national" class="muted"></p>
+    <p><b>ข้อจำกัดความรับผิดชอบ:</b> เว็บไซต์นี้ใช้ข้อมูลจริงจากระบบ ThaiWater ของ สสน. ข้อความสรุป ระดับความเสี่ยง และการคาดการณ์เวลาน้ำมาถึง เป็นการประมวลผลของระบบซึ่งอาจผิดพลาด ไม่ใช่ประกาศทางการ ห้ามใช้แทนคำเตือนของหน่วยงาน โปรดติดตามสถานการณ์และประกาศจากกรมชลประทาน ปภ. กรมอุตุนิยมวิทยา และหน่วยงานท้องถิ่นอย่างต่อเนื่อง</p>
+    <p>ข้อมูล: <a href="https://www.thaiwater.net" target="_blank" rel="noopener">ThaiWater / สสน.</a> · <a href="https://hyd-app-db.rid.go.th/hydro5h.html" target="_blank" rel="noopener">กรมชลประทาน</a> · <a href="https://weather.bangkok.go.th/water" target="_blank" rel="noopener">สำนักการระบายน้ำ กทม.</a> · <a href="/status.html">สถานะระบบ</a></p>
+  </footer>
 </div>
+
 <script>
-const fmt = iso => new Date(iso).toLocaleString("th-TH",{timeZone:"Asia/Bangkok",dateStyle:"medium",timeStyle:"short"});
+const LABEL = {over:"ล้นตลิ่ง",watch:"เฝ้าระวัง",ok:"ปกติ",na:"ไม่มีเกณฑ์",stale:"ข้อมูลเก่า"};
+const RANK = {over:3,watch:2,ok:1,na:0,stale:-1};
+const REFRESH_MS = 5*60e3, STALE_MIN = 90;
+let DATA=null, current=null, scope="prov";
+
 const esc = s => String(s ?? "").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function renderLatest(r){
-  if(!r){ document.getElementById("meta").textContent="ยังไม่มีผลทดสอบ กด “ทดสอบตอนนี้” เพื่อเริ่ม"; return; }
-  document.getElementById("meta").textContent=`${fmt(r.at)} · ${r.trigger==="schedule"?"รอบอัตโนมัติ":"สั่งเอง"} · ใช้เวลารวม ${(r.totalMs/1000).toFixed(1)} วินาที${r.region?` · region ${r.region}`:""}`;
-  document.getElementById("cards").innerHTML=r.sources.map(s=>`
-    <article class="card" data-ok="${s.ok}">
-      <b>${esc(s.name)}</b>
-      <span class="pill">${s.ok?"ดึงได้":"ดึงไม่ได้"}</span>
-      <dl>
-        <dt>HTTP</dt><dd>${s.httpStatus ?? "–"}</dd>
-        <dt>เวลาตอบ</dt><dd>${s.ms!=null?s.ms+" ms":"–"}</dd>
-        <dt>ขนาด</dt><dd>${s.bytes?(s.bytes/1024).toFixed(0)+" KB":"–"}</dd>
-        <dt>จำนวน</dt><dd>${s.records}</dd>
-        <dt>ข้อมูลล่าสุด</dt><dd>${esc(s.latest||"–")}</dd>
-      </dl>
-      ${s.note?`<div class="muted" style="font-size:.85rem">${esc(s.note)}</div>`:""}
-      ${s.error?`<div class="err">${esc(s.error)}</div>`:""}
-    </article>`).join("");
+const timeTH = iso => new Date(iso).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Bangkok"});
+const dateTH = iso => new Date(iso).toLocaleDateString("th-TH",{day:"numeric",month:"short",timeZone:"Asia/Bangkok"});
+const ago = iso => { const m=Math.round((Date.now()-new Date(iso))/60e3); return m<1?"เมื่อสักครู่":m<60?`${m} นาทีที่แล้ว`:`${Math.floor(m/60)} ชม. ${m%60} นาทีที่แล้ว`; };
+const cm = d => `${d>0?"+":""}${Math.round(d*100)} ซม.`;
+const color = s => `var(--${s==="stale"?"na":s})`;
+
+function renderStamp(){
+  const d=DATA, el=document.getElementById("stamp"), bar=document.getElementById("stalebar");
+  if(!d || d.empty){ el.textContent="ยังไม่มีข้อมูล ระบบจะดึงรอบแรกภายใน 30 นาที"; return; }
+  const reading = d.latestReading;
+  el.innerHTML = `ข้อมูลวัดล่าสุด <b>${dateTH(reading)} ${timeTH(reading)} น.</b> (${ago(reading)})<br>ระบบดึงข้อมูล ${timeTH(d.source.lastAttempt)} น. · อัปเดตทุก 30 นาที`;
+  const lateMin = (Date.now()-new Date(reading))/60e3;
+  const msgs=[];
+  if(!d.source.ok) msgs.push(`ดึงข้อมูลรอบล่าสุดไม่สำเร็จ (${esc(d.source.error||"ไม่ทราบสาเหตุ")}) กำลังแสดงข้อมูลรอบก่อนหน้า`);
+  if(lateMin>STALE_MIN) msgs.push(`ข้อมูลล่าช้า ${ago(reading)} ตัวเลขอาจไม่ตรงกับสถานการณ์ปัจจุบัน`);
+  bar.hidden=!msgs.length; bar.innerHTML=msgs.join("<br>");
 }
-function renderLog(log){
-  if(!log.length) return;
-  const yn = v => v?'<span class="y">ได้</span>':'<span class="n">ไม่ได้</span>';
-  document.getElementById("log").innerHTML=[...log].reverse().map(x=>`<tr><td>${fmt(x.at)}</td><td>${x.trigger==="schedule"?"อัตโนมัติ":"สั่งเอง"}</td><td>${yn(x.ok.thaiwater)}</td><td>${yn(x.ok.rid)}</td><td>${yn(x.ok.bma)}</td><td class="mono">${(x.totalMs/1000).toFixed(1)} s</td></tr>`).join("");
+
+function renderChips(){
+  const box=document.getElementById("chips"); box.innerHTML="";
+  (DATA.provinceOrder||Object.keys(DATA.provinces)).forEach(p=>{
+    const lv=DATA.provinces[p]?.level||"na";
+    const b=document.createElement("button"); b.type="button"; b.className="chip"; b.dataset.p=p;
+    b.setAttribute("aria-pressed", p===current);
+    b.innerHTML=`<span class="dot" style="background:${color(lv)}"></span>${esc(p)}`;
+    b.addEventListener("click",()=>select(p));
+    box.appendChild(b);
+  });
 }
+
+function renderBrief(){
+  const f=DATA.provinces[current]; if(!f) return;
+  const brief=document.getElementById("brief"); brief.dataset.s=f.level;
+  document.getElementById("b-title").textContent=current;
+  const pill=document.getElementById("b-pill"); pill.dataset.s=f.level; pill.textContent=LABEL[f.level]||"–";
+  document.getElementById("b-text").innerHTML=f.summary.map(t=>`<p>${esc(t)}</p>`).join("");
+  document.getElementById("b-foot").textContent = f.summaryBy==="ai"
+    ? "ข้อความนี้ AI เรียบเรียงจากตัวเลขของ สสน. โดยตรง ระดับความเสี่ยงคำนวณด้วยกฎตายตัว อาจคลาดเคลื่อน โปรดตรวจสอบกับประกาศทางการ"
+    : "ข้อความนี้สร้างจากกฎตายตัวโดยใช้ตัวเลขของ สสน. โดยตรง ระดับความเสี่ยงและเวลาน้ำมาถึงเป็นการประมาณของระบบ อาจคลาดเคลื่อน";
+  const k=f.key, c=f.counts;
+  document.getElementById("facts").innerHTML=`
+    <div class="fact"><span class="k">สถานีในจังหวัด (ข้อมูลเป็นปัจจุบัน)</span><span class="v num">${c.fresh}<span class="muted" style="font-size:.8rem">/${c.total}</span></span></div>
+    <div class="fact"><span class="k">จุดล้นตลิ่ง</span><span class="v num" style="color:${c.over?"var(--over)":"inherit"}">${c.over}</span></div>
+    <div class="fact"><span class="k">จุดเฝ้าระวัง</span><span class="v num" style="color:${c.watch?"var(--watch)":"inherit"}">${c.watch}</span></div>
+    <div class="fact"><span class="k">น้ำกำลังเพิ่มขึ้นเร็ว</span><span class="v num">${c.rising}</span></div>
+    <div class="fact"><span class="k">เวลาน้ำจากเขื่อนเจ้าพระยา (ประมาณ)</span><span class="v num">${f.travelHours==null?"–":f.travelHours===0?"ต้นทาง":"~"+f.travelHours+" ชม."}</span></div>`;
+}
+
+function renderRisk(){
+  const all = scope==="all";
+  const rows = DATA.stations.filter(s=>(s.status==="over"||s.status==="watch") && (all || s.prov===current))
+    .sort((a,b)=>RANK[b.status]-RANK[a.status] || (b.pct??0)-(a.pct??0));
+  document.getElementById("risk-sub").textContent = `${all?"ทุกจังหวัดในระบบ":"จ."+current} ${rows.length} จุด · สถานีที่น้ำเกิน 80% ของความจุ หรือล้นตลิ่ง`;
+  const tb=document.getElementById("risk-tb");
+  tb.innerHTML = rows.length ? rows.map(s=>{
+    const m = s.lvl!=null && s.bank!=null ? s.lvl-s.bank : null;
+    const tr = s.trend ? `${cm(s.trend.d)}<span class="sub">${s.trend.hours} ชม.</span>` : "–";
+    return `<tr>
+      <td><b>อ.${esc(s.amp)}</b><span class="sub">${s.tam?"ต."+esc(s.tam):"ไม่ระบุตำบล"}</span>${all?`<span class="sub">จ.${esc(s.prov)}</span>`:""}</td>
+      <td>${esc(s.name)}<span class="sub"><span class="src">${esc(s.code)} · ${esc(s.agency||"สสน.")} · ${timeTH(s.at)} น.</span></span></td>
+      <td><span class="pill" data-s="${s.status}">${LABEL[s.status]}</span>${s.tide?`<span class="sub" style="color:var(--tide)">น้ำทะเลหนุน</span>`:""}</td>
+      <td class="r num" style="color:${m>0?"var(--over)":"inherit"}">${m==null?"–":(m>0?"+":"−")+Math.abs(m).toFixed(2)+" ม."}</td>
+      <td class="r num">${s.pct!=null?Math.round(s.pct)+"%":"–"}</td>
+      <td class="r num">${tr}</td></tr>`;
+  }).join("") : `<tr><td colspan="6" class="muted">ไม่มีสถานีที่น้ำเกิน 80% ของความจุ ณ เวลาข้อมูลนี้</td></tr>`;
+  const notices = all ? Object.entries(DATA.provinces).flatMap(([p,f])=>f.notices.map(n=>({...n,p}))) : (DATA.provinces[current]?.notices||[]).map(n=>({...n,p:current}));
+  const off=document.getElementById("official");
+  off.hidden=!notices.length;
+  off.innerHTML = notices.map(n=>`<b>ประกาศ${esc(n.source)} ${dateTH(n.date+"T00:00:00+07:00")}</b> จ.${esc(n.p)}: อ.${n.districts.map(esc).join(", อ.")} ${esc(n.text)} <a href="${esc(n.url)}" target="_blank" rel="noopener">ที่มา</a>`).join("<br>");
+}
+
+function stationEl(s){
+  const el=document.createElement("div"); el.className="st"+(s.prov===current?" sel":"");
+  const m = s.lvl!=null && s.bank!=null ? s.lvl-s.bank : null;
+  const fill = s.pct!=null ? Math.max(3,Math.min(100,s.pct)) : 0;
+  const tags=[];
+  if(s.tide) tags.push(`<span class="tag tide">น้ำทะเลหนุน</span>`);
+  if(s.trend && !s.tide && s.trend.d>=0.1) tags.push(`<span class="tag up">เพิ่มขึ้น ${cm(s.trend.d)} / ${s.trend.hours} ชม.</span>`);
+  if(s.status==="stale") tags.push(`<span class="tag">ข้อมูลเก่า ${ago(s.at)}</span>`);
+  el.innerHTML=`<div class="row1"><span class="code">${esc(s.code)}</span><span class="name">${esc(s.name)}</span><span class="where">${s.tam?"ต."+esc(s.tam)+" ":""}อ.${esc(s.amp)} จ.${esc(s.prov)}</span></div>
+    <div class="gauge"><div class="bar"><i data-s="${s.status==="stale"?"na":s.status}" style="width:${fill}%"></i><b></b></div>
+    <span class="gv num">${s.lvl!=null?s.lvl.toFixed(2)+" ม.":"–"} · ${m==null?"ไม่มีตลิ่ง":(m>0?"เหนือตลิ่ง ":"ต่ำกว่า ")+Math.abs(m).toFixed(2)}${s.pct!=null?" · "+Math.round(s.pct)+"%":""}</span></div>
+    ${tags.length?`<div class="tags">${tags.join("")}</div>`:""}`;
+  return el;
+}
+
+function renderRivers(){
+  const box=document.getElementById("rivers"); box.innerHTML="";
+  const byCode = Object.fromEntries(DATA.stations.map(s=>[s.code,s]));
+  for(const r of DATA.rivers||[]){
+    const list=r.codes.map(c=>byCode[c]).filter(Boolean);
+    if(!list.length) continue;
+    const card=document.createElement("div"); card.className="card";
+    card.innerHTML=`<h3 style="margin-bottom:6px">${esc(r.name)}</h3>`;
+    const stem=document.createElement("div"); stem.className="stem";
+    list.forEach(s=>{
+      const row=document.createElement("div"); row.className="seg";
+      row.innerHTML=`<div class="rail"><span class="node" data-s="${s.status==="stale"?"na":s.status}"></span></div>`;
+      row.appendChild(stationEl(s)); stem.appendChild(row);
+    });
+    card.appendChild(stem); box.appendChild(card);
+  }
+}
+
+function renderNational(){
+  const n=DATA.national; if(!n) return;
+  document.getElementById("national").textContent=`ทั่วประเทศ (ThaiWater): ล้นตลิ่ง ${n.over} สถานี · น้ำมาก ${n.high} สถานี จากทั้งหมด ${n.total} สถานี`;
+}
+
+function select(p){
+  current=p;
+  try{ localStorage.setItem("ntn-prov",p); }catch(e){}
+  document.querySelectorAll("#chips .chip").forEach(c=>c.setAttribute("aria-pressed", c.dataset.p===p));
+  renderBrief(); renderRisk(); renderRivers();
+}
+function setScope(s){
+  scope=s;
+  document.getElementById("scope-prov").setAttribute("aria-pressed", s==="prov");
+  document.getElementById("scope-all").setAttribute("aria-pressed", s==="all");
+  renderRisk();
+}
+document.getElementById("scope-prov").addEventListener("click",()=>setScope("prov"));
+document.getElementById("scope-all").addEventListener("click",()=>setScope("all"));
+
 async function load(){
-  try{ const r=await fetch("/api/status",{cache:"no-store"}); const j=await r.json(); renderLatest(j.latest); renderLog(j.log||[]); }
-  catch(e){ document.getElementById("meta").textContent="โหลดสถานะไม่สำเร็จ: "+e.message; }
+  try{
+    const r=await fetch("/api/latest",{cache:"no-store"});
+    const d=await r.json();
+    DATA=d;
+    if(d.empty){ renderStamp(); document.getElementById("b-text").innerHTML=`<p class="muted">${esc(d.message)}</p>`; return; }
+    if(!current){
+      let saved=null; try{ saved=localStorage.getItem("ntn-prov"); }catch(e){}
+      current = d.provinces[saved] ? saved : (d.provinces["พระนครศรีอยุธยา"] ? "พระนครศรีอยุธยา" : Object.keys(d.provinces)[0]);
+    }
+    renderStamp(); renderChips(); renderNational(); select(current);
+  }catch(e){
+    const bar=document.getElementById("stalebar"); bar.hidden=false;
+    bar.textContent="โหลดข้อมูลไม่สำเร็จ ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต ระบบจะลองใหม่อัตโนมัติ";
+  }
 }
-document.getElementById("run").addEventListener("click",async e=>{
-  const b=e.currentTarget; b.disabled=true; b.textContent="กำลังทดสอบ…";
-  try{ const r=await fetch("/api/probe",{cache:"no-store"}); renderLatest(await r.json()); await load(); }
-  catch(err){ document.getElementById("meta").textContent="ทดสอบไม่สำเร็จ: "+err.message; }
-  b.disabled=false; b.textContent="ทดสอบตอนนี้";
-});
 load();
+setInterval(()=>{ if(!document.hidden) load(); }, REFRESH_MS);
+setInterval(()=>{ if(DATA && !DATA.empty) renderStamp(); }, 60e3);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden && DATA && Date.now()-new Date(DATA.generatedAt)>REFRESH_MS) load(); });
 </script>
+
 </body>
 </html>

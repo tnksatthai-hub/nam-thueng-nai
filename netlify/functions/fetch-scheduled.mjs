@@ -1,13 +1,9 @@
-// รันอัตโนมัติทุก 30 นาที (นาทีที่ 0 และ 30 ตามเวลา UTC ซึ่งตรงกับนาทีเดียวกันในเวลาไทย)
-// ตอนนี้ทำหน้าที่ทดสอบ: ดึงทั้ง 3 แหล่งแล้วบันทึกผลลง Netlify Blobs
-// ขั้นถัดไปจะเปลี่ยนเป็นตัวดึงข้อมูลจริง (แปลงข้อมูล + คำนวณสถานะ + เก็บ latest.json)
-import { probeAll } from "../../lib/sources.mjs";
-import { saveRun } from "../../lib/store.mjs";
+// ดึงข้อมูลอัตโนมัติทุก 30 นาที (นาทีที่ :00 และ :30)
+import { runIngest } from "../../lib/ingest.mjs";
 
 export default async () => {
-  const report = await probeAll("schedule");
-  await saveRun(report);
-  console.log(JSON.stringify(report.sources.map((s) => ({ id: s.id, ok: s.ok, ms: s.ms, error: s.error }))));
+  const r = await runIngest("schedule");
+  console.log(JSON.stringify(r));
 };
 
 export const config = {
