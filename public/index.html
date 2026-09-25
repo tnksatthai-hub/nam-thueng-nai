@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>น้ำถึงไหน · ทดสอบแหล่งข้อมูล</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans+Thai:wght@400;600&family=IBM+Plex+Mono&display=swap">
+<style>
+:root{--bg:#EEF3F4;--surface:#fff;--sunk:#E3EBED;--ink:#10262E;--ink2:#46606A;--line:#C9D6DA;--accent:#1B5E78;--ok:#1F8A5B;--ok-bg:#DDF1E7;--bad:#C4302B;--bad-bg:#F8DDDB;--na:#7B8D93}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0C181D;--surface:#13242B;--sunk:#0F1E24;--ink:#E4EEF0;--ink2:#9BB2BA;--line:#27404A;--accent:#6FB7D2;--ok:#4CC08A;--ok-bg:#153A2A;--bad:#FF6B63;--bad-bg:#44191A}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "IBM Plex Sans Thai",system-ui,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:24px 16px 48px;display:flex;flex-direction:column;gap:22px}
+h1,h2{font-family:"Chakra Petch","IBM Plex Sans Thai",sans-serif;margin:0;line-height:1.2}
+h1{font-size:1.9rem}h1 span{color:var(--accent)}h2{font-size:1.2rem}
+.muted{color:var(--ink2)}.mono{font-family:"IBM Plex Mono",monospace;font-size:.82rem}
+header{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:12px}
+button{font:inherit;font-weight:600;background:var(--accent);color:var(--bg);border:0;border-radius:99px;padding:8px 18px;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;border-top:5px solid var(--na)}
+.card[data-ok="true"]{border-top-color:var(--ok)}.card[data-ok="false"]{border-top-color:var(--bad)}
+.pill{align-self:flex-start;font-weight:600;font-size:.82rem;padding:2px 12px;border-radius:99px;background:var(--sunk);color:var(--na)}
+.card[data-ok="true"] .pill{background:var(--ok-bg);color:var(--ok)}.card[data-ok="false"] .pill{background:var(--bad-bg);color:var(--bad)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:0;font-size:.88rem}dt{color:var(--ink2)}dd{margin:0;font-variant-numeric:tabular-nums}
+.err{color:var(--bad);font-size:.88rem}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:.88rem}th,td{padding:7px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--sunk);color:var(--ink2);font-size:.78rem}tr:last-child td{border-bottom:0}
+.y{color:var(--ok);font-weight:600}.n{color:var(--bad);font-weight:600}
+.note{background:var(--sunk);border-radius:8px;padding:12px 14px;font-size:.88rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><div class="muted" style="font-size:.8rem">ขั้นทดสอบ · ตรวจว่าเซิร์ฟเวอร์ Netlify ดึงข้อมูลได้ไหม</div><h1>น้ำ<span>ถึงไหน</span></h1></div>
+    <button id="run" type="button">ทดสอบตอนนี้</button>
+  </header>
+
+  <section class="stack">
+    <h2>ผลรอบล่าสุด</h2>
+    <p class="muted" id="meta">กำลังโหลด…</p>
+    <div class="grid" id="cards"></div>
+  </section>
+
+  <section>
+    <h2 style="margin-bottom:8px">ประวัติการรัน</h2>
+    <p class="muted" style="margin:0 0 10px">รอบอัตโนมัติควรขึ้นทุก 30 นาที (นาทีที่ :00 และ :30) ถ้าเห็นแต่ “สั่งเอง” แปลว่าการตั้งเวลายังไม่ทำงาน</p>
+    <div class="tbl"><table>
+      <thead><tr><th>เวลา (ไทย)</th><th>ที่มา</th><th>ThaiWater</th><th>กรมชลฯ</th><th>สนน.</th><th>ใช้เวลา</th></tr></thead>
+      <tbody id="log"><tr><td colspan="6" class="muted">ยังไม่มีข้อมูล</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <p class="note">หน้านี้ใช้ทดสอบระบบเท่านั้น ยังไม่ใช่หน้ารายงานสถานการณ์น้ำ ข้อมูลเป็นของกรมชลประทาน สสน. และสำนักการระบายน้ำ กทม.</p>
+</div>
+<script>
+const fmt = iso => new Date(iso).toLocaleString("th-TH",{timeZone:"Asia/Bangkok",dateStyle:"medium",timeStyle:"short"});
+const esc = s => String(s ?? "").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function renderLatest(r){
+  if(!r){ document.getElementById("meta").textContent="ยังไม่มีผลทดสอบ กด “ทดสอบตอนนี้” เพื่อเริ่ม"; return; }
+  document.getElementById("meta").textContent=`${fmt(r.at)} · ${r.trigger==="schedule"?"รอบอัตโนมัติ":"สั่งเอง"} · ใช้เวลารวม ${(r.totalMs/1000).toFixed(1)} วินาที${r.region?` · region ${r.region}`:""}`;
+  document.getElementById("cards").innerHTML=r.sources.map(s=>`
+    <article class="card" data-ok="${s.ok}">
+      <b>${esc(s.name)}</b>
+      <span class="pill">${s.ok?"ดึงได้":"ดึงไม่ได้"}</span>
+      <dl>
+        <dt>HTTP</dt><dd>${s.httpStatus ?? "–"}</dd>
+        <dt>เวลาตอบ</dt><dd>${s.ms!=null?s.ms+" ms":"–"}</dd>
+        <dt>ขนาด</dt><dd>${s.bytes?(s.bytes/1024).toFixed(0)+" KB":"–"}</dd>
+        <dt>จำนวน</dt><dd>${s.records}</dd>
+        <dt>ข้อมูลล่าสุด</dt><dd>${esc(s.latest||"–")}</dd>
+      </dl>
+      ${s.note?`<div class="muted" style="font-size:.85rem">${esc(s.note)}</div>`:""}
+      ${s.error?`<div class="err">${esc(s.error)}</div>`:""}
+    </article>`).join("");
+}
+function renderLog(log){
+  if(!log.length) return;
+  const yn = v => v?'<span class="y">ได้</span>':'<span class="n">ไม่ได้</span>';
+  document.getElementById("log").innerHTML=[...log].reverse().map(x=>`<tr><td>${fmt(x.at)}</td><td>${x.trigger==="schedule"?"อัตโนมัติ":"สั่งเอง"}</td><td>${yn(x.ok.thaiwater)}</td><td>${yn(x.ok.rid)}</td><td>${yn(x.ok.bma)}</td><td class="mono">${(x.totalMs/1000).toFixed(1)} s</td></tr>`).join("");
+}
+async function load(){
+  try{ const r=await fetch("/api/status",{cache:"no-store"}); const j=await r.json(); renderLatest(j.latest); renderLog(j.log||[]); }
+  catch(e){ document.getElementById("meta").textContent="โหลดสถานะไม่สำเร็จ: "+e.message; }
+}
+document.getElementById("run").addEventListener("click",async e=>{
+  const b=e.currentTarget; b.disabled=true; b.textContent="กำลังทดสอบ…";
+  try{ const r=await fetch("/api/probe",{cache:"no-store"}); renderLatest(await r.json()); await load(); }
+  catch(err){ document.getElementById("meta").textContent="ทดสอบไม่สำเร็จ: "+err.message; }
+  b.disabled=false; b.textContent="ทดสอบตอนนี้";
+});
+load();
+</script>
+</body>
+</html>

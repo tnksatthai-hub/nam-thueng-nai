@@ -1,0 +1,12 @@
+{
+  "name": "nam-thueng-nai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "น้ำถึงไหน — ทดสอบการดึงข้อมูลน้ำจากกรมชลประทาน สสน. และ สนน. บน Netlify",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "@netlify/functions": "^3.0.0"
+  }
+}
