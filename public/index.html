@@ -189,6 +189,14 @@ td .sub{display:block;font-size:.8rem;color:var(--ink2)}
     <aside class="card facts" id="facts"></aside>
   </section>
 
+  <section class="stack" aria-labelledby="rain-h" id="rain-sec" hidden>
+    <div class="stack" style="gap:4px">
+      <h2 id="rain-h">ฝนสะสม</h2>
+      <p class="muted" id="rain-sub"></p>
+    </div>
+    <div class="two" id="rain-grid"></div>
+  </section>
+
   <section class="stack" aria-labelledby="risk-h">
     <div class="risk-head">
       <div class="stack" style="gap:4px">
@@ -227,7 +235,7 @@ td .sub{display:block;font-size:.8rem;color:var(--ink2)}
   <footer>
     <p id="national" class="muted"></p>
     <p><b>ข้อจำกัดความรับผิดชอบ:</b> เว็บไซต์นี้ใช้ข้อมูลจริงจากระบบ ThaiWater ของ สสน. ข้อความสรุป ระดับความเสี่ยง และการคาดการณ์เวลาน้ำมาถึง เป็นการประมวลผลของระบบซึ่งอาจผิดพลาด ไม่ใช่ประกาศทางการ ห้ามใช้แทนคำเตือนของหน่วยงาน โปรดติดตามสถานการณ์และประกาศจากกรมชลประทาน ปภ. กรมอุตุนิยมวิทยา และหน่วยงานท้องถิ่นอย่างต่อเนื่อง</p>
-    <p>ข้อมูล: <a href="https://www.thaiwater.net" target="_blank" rel="noopener">ThaiWater / สสน.</a> · <a href="https://hyd-app-db.rid.go.th/hydro5h.html" target="_blank" rel="noopener">กรมชลประทาน</a> · <a href="https://weather.bangkok.go.th/water" target="_blank" rel="noopener">สำนักการระบายน้ำ กทม.</a> · <a href="/status.html">สถานะระบบ</a></p>
+    <p>ข้อมูล: <a href="https://www.thaiwater.net" target="_blank" rel="noopener">ThaiWater / สสน.</a> · <a href="https://nonthaburi.thaiwater.net/wl" target="_blank" rel="noopener">ศูนย์ข้อมูลน้ำระดับจังหวัด</a> · <a href="https://hyd-app-db.rid.go.th/hydro5h.html" target="_blank" rel="noopener">กรมชลประทาน</a> · <a href="https://weather.bangkok.go.th/water" target="_blank" rel="noopener">สำนักการระบายน้ำ กทม.</a> · <a href="/status.html">สถานะระบบ</a></p>
   </footer>
 </div>
 
@@ -288,7 +296,7 @@ function renderBrief(){
 
 function renderRisk(){
   const all = scope==="all";
-  const rows = DATA.stations.filter(s=>(s.status==="over"||s.status==="watch") && (all || s.prov===current))
+  const rows = DATA.stations.filter(s=>!s.dupOf && (s.status==="over"||s.status==="watch") && (all || s.prov===current))
     .sort((a,b)=>RANK[b.status]-RANK[a.status] || (b.pct??0)-(a.pct??0));
   document.getElementById("risk-sub").textContent = `${all?"ทุกจังหวัดในระบบ":"จ."+current} ${rows.length} จุด · สถานีที่น้ำเกิน 80% ของความจุ หรือล้นตลิ่ง`;
   const tb=document.getElementById("risk-tb");
@@ -297,7 +305,7 @@ function renderRisk(){
     const tr = s.trend ? `${cm(s.trend.d)}<span class="sub">${s.trend.hours} ชม.</span>` : "–";
     return `<tr>
       <td><b>อ.${esc(s.amp)}</b><span class="sub">${s.tam?"ต."+esc(s.tam):"ไม่ระบุตำบล"}</span>${all?`<span class="sub">จ.${esc(s.prov)}</span>`:""}</td>
-      <td>${esc(s.name)}<span class="sub"><span class="src">${esc(s.code)} · ${esc(s.agency||"สสน.")} · ${timeTH(s.at)} น.</span></span></td>
+      <td>${esc(s.name)}<span class="sub"><span class="src">${esc(s.code)} · ${esc(s.agency||"สสน.")} · ${timeTH(s.at)} น.</span></span>${s.alsoAt?`<span class="sub">จุดเดียวกับ ${s.alsoAt.map(esc).join(", ")}</span>`:""}</td>
       <td><span class="pill" data-s="${s.status}">${LABEL[s.status]}</span>${s.tide?`<span class="sub" style="color:var(--tide)">น้ำทะเลหนุน</span>`:""}</td>
       <td class="r num" style="color:${m>0?"var(--over)":"inherit"}">${m==null?"–":(m>0?"+":"−")+Math.abs(m).toFixed(2)+" ม."}</td>
       <td class="r num">${s.pct!=null?Math.round(s.pct)+"%":"–"}</td>
@@ -307,6 +315,15 @@ function renderRisk(){
   const off=document.getElementById("official");
   off.hidden=!notices.length;
   off.innerHTML = notices.map(n=>`<b>ประกาศ${esc(n.source)} ${dateTH(n.date+"T00:00:00+07:00")}</b> จ.${esc(n.p)}: อ.${n.districts.map(esc).join(", อ.")} ${esc(n.text)} <a href="${esc(n.url)}" target="_blank" rel="noopener">ที่มา</a>`).join("<br>");
+}
+
+function renderRain(){
+  const sec=document.getElementById("rain-sec"), r=DATA.rain?.provinces?.[current];
+  if(!r || (!r.r3?.length && !r.r7?.length)){ sec.hidden=true; return; }
+  sec.hidden=false;
+  document.getElementById("rain-sub").textContent=`สถานีวัดฝนของ สสน. ใน จ.${current} ที่ฝนสะสมสูงสุด ${r.stale?"· ใช้ข้อมูลรอบก่อน (ดึงรอบนี้ไม่สำเร็จ)":""} · ฝนตกหนักในพื้นที่อาจทำให้น้ำท่วมขังได้แม้แม่น้ำยังไม่ล้นตลิ่ง`;
+  const table=(title,list)=>`<div class="card"><h3 style="margin-bottom:8px">${title}</h3>${list?.length?`<div class="tbl" style="border:0"><table><tbody>${list.map(x=>`<tr><td><b>${x.tam?"ต."+esc(x.tam):""}</b> อ.${esc(x.amp)}<span class="sub">${esc(x.name)}</span></td><td class="r num" style="font-weight:600;color:${x.mm>=100?"var(--over)":x.mm>=50?"var(--watch)":"inherit"}">${Math.round(x.mm)} มม.</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">ไม่มีข้อมูล</p>`}</div>`;
+  document.getElementById("rain-grid").innerHTML=table("3 วันล่าสุด",r.r3)+table("7 วันล่าสุด",r.r7);
 }
 
 function stationEl(s){
@@ -351,7 +368,7 @@ function select(p){
   current=p;
   try{ localStorage.setItem("ntn-prov",p); }catch(e){}
   document.querySelectorAll("#chips .chip").forEach(c=>c.setAttribute("aria-pressed", c.dataset.p===p));
-  renderBrief(); renderRisk(); renderRivers();
+  renderBrief(); renderRain(); renderRisk(); renderRivers();
 }
 function setScope(s){
   scope=s;
