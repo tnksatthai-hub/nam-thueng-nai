@@ -55,6 +55,18 @@ th{background:var(--sunk);color:var(--ink2);font-size:.78rem}tr:last-child td{bo
     </table></div>
   </section>
 
+  <section>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <h2>ตรวจ API key ของ AI</h2>
+      <button id="aibtn" type="button">ตรวจ AI</button>
+    </div>
+    <p class="muted" style="margin:0 0 10px">ระบบลองเรียก AI แต่ละตัวจากเซิร์ฟเวอร์ Netlify แล้วแสดงผล ไม่แสดง key · ตรวจได้ทุก 2 นาที · ลำดับที่ใช้จริงเรียงตามตาราง</p>
+    <div class="tbl"><table>
+      <thead><tr><th>AI</th><th>ผล</th><th>โมเดล</th><th>รายละเอียด</th><th>ใช้เวลา</th></tr></thead>
+      <tbody id="ai"><tr><td colspan="5" class="muted">กด “ตรวจ AI” เพื่อเริ่ม</td></tr></tbody>
+    </table></div>
+  </section>
+
   <p class="note">หน้านี้ใช้ตรวจสถานะระบบ หน้ารายงานสถานการณ์น้ำอยู่ที่ <a href="/">หน้าแรก</a> ข้อมูลเป็นของกรมชลประทาน สสน. และสำนักการระบายน้ำ กทม.</p>
 </div>
 <script>
@@ -94,6 +106,16 @@ document.getElementById("run").addEventListener("click",async e=>{
   b.disabled=false; b.textContent="ทดสอบตอนนี้";
 });
 load();
+document.getElementById("aibtn").addEventListener("click",async e=>{
+  const b=e.currentTarget; b.disabled=true; b.textContent="กำลังตรวจ…";
+  const tb=document.getElementById("ai");
+  try{
+    const j=await fetch("/api/ai-check",{cache:"no-store"}).then(r=>r.json());
+    if(!j.results?.length){ tb.innerHTML=`<tr><td colspan="5" class="muted">${esc(j.message||"ไม่มีข้อมูล")}</td></tr>`; }
+    else tb.innerHTML=j.results.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td>${r.ok?'<span class="y">ใช้ได้</span>':'<span class="n">ใช้ไม่ได้</span>'}</td><td class="mono">${esc(r.model||"–")}</td><td>${esc(r.detail)}</td><td class="mono">${(r.ms/1000).toFixed(1)} s</td></tr>`).join("")+(j.cached?`<tr><td colspan="5" class="muted">ผลจากการตรวจเมื่อ ${fmt(j.at)} (ตรวจใหม่ได้หลัง 2 นาที)</td></tr>`:"");
+  }catch(err){ tb.innerHTML=`<tr><td colspan="5" class="n">ตรวจไม่สำเร็จ: ${esc(err.message)}</td></tr>`; }
+  b.disabled=false; b.textContent="ตรวจ AI";
+});
 </script>
 </body>
 </html>
