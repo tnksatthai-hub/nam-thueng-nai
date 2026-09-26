@@ -30,6 +30,7 @@ table{border-collapse:collapse;width:100%;font-size:.88rem}th,td{padding:7px 12p
 th{background:var(--sunk);color:var(--ink2);font-size:.78rem}tr:last-child td{border-bottom:0}
 .y{color:var(--ok);font-weight:600}.n{color:var(--bad);font-weight:600}
 .note{background:var(--sunk);border-radius:8px;padding:12px 14px;font-size:.88rem}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -49,8 +50,8 @@ th{background:var(--sunk);color:var(--ink2);font-size:.78rem}tr:last-child td{bo
     <h2 style="margin-bottom:8px">ประวัติการรัน</h2>
     <p class="muted" style="margin:0 0 10px">ประวัติการกดทดสอบด้วยมือ (รอบอัตโนมัติจริงดูได้ที่ Netlify → Logs → Functions → fetch-scheduled)</p>
     <div class="tbl"><table>
-      <thead><tr><th>เวลา (ไทย)</th><th>ที่มา</th><th>ThaiWater</th><th>กรมชลฯ</th><th>สนน.</th><th>ใช้เวลา</th></tr></thead>
-      <tbody id="log"><tr><td colspan="6" class="muted">ยังไม่มีข้อมูล</td></tr></tbody>
+      <thead><tr><th>เวลา (ไทย)</th><th>ที่มา</th><th>ThaiWater</th><th>กรมชลฯ hydro</th><th>สนน.</th><th>กรมชลฯ bigdata</th><th>อ่างเก็บน้ำ</th><th>ใช้เวลา</th></tr></thead>
+      <tbody id="log"><tr><td colspan="8" class="muted">ยังไม่มีข้อมูล</td></tr></tbody>
     </table></div>
   </section>
 
@@ -80,7 +81,7 @@ function renderLatest(r){
 function renderLog(log){
   if(!log.length) return;
   const yn = v => v?'<span class="y">ได้</span>':'<span class="n">ไม่ได้</span>';
-  document.getElementById("log").innerHTML=[...log].reverse().map(x=>`<tr><td>${fmt(x.at)}</td><td>${x.trigger==="schedule"?"อัตโนมัติ":"สั่งเอง"}</td><td>${yn(x.ok.thaiwater)}</td><td>${yn(x.ok.rid)}</td><td>${yn(x.ok.bma)}</td><td class="mono">${(x.totalMs/1000).toFixed(1)} s</td></tr>`).join("");
+  document.getElementById("log").innerHTML=[...log].reverse().map(x=>`<tr><td>${fmt(x.at)}</td><td>${x.trigger==="schedule"?"อัตโนมัติ":"สั่งเอง"}</td><td>${yn(x.ok.thaiwater)}</td><td>${yn(x.ok.rid)}</td><td>${yn(x.ok.bma)}</td><td>${x.ok.ridbig===undefined?"–":yn(x.ok.ridbig)}</td><td>${x.ok.riddam===undefined?"–":yn(x.ok.riddam)}</td><td class="mono">${(x.totalMs/1000).toFixed(1)} s</td></tr>`).join("");
 }
 async function load(){
   try{ const r=await fetch("/api/status",{cache:"no-store"}); const j=await r.json(); renderLatest(j.latest); renderLog(j.log||[]); }
